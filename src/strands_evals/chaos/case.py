@@ -16,7 +16,7 @@ from ..types.evaluation import InputT, OutputT
 from .effects import ModelEffectUnion, ToolEffectUnion
 
 
-class ChaosEffects(TypedDict, total=False):
+class ChaosEffectsConfig(TypedDict, total=False):
     """Typed schema for chaos effects configuration."""
 
     __pydantic_config__ = ConfigDict(extra="forbid")  # type: ignore[misc]
@@ -75,8 +75,8 @@ class ChaosCase(Case, Generic[InputT, OutputT]):
         # Produces 6 ChaosCase objects: 2 cases × (2 effect maps + 1 baseline)
     """
 
-    effects: ChaosEffects = Field(
-        default_factory=ChaosEffects,
+    effects: ChaosEffectsConfig = Field(
+        default_factory=ChaosEffectsConfig,
         description="Effect categories. Supports 'tool_effects' mapping "
         "tool_name -> list of effects, and 'model_effects' mapping "
         "'*' wildcard -> list of effects. "
@@ -114,7 +114,7 @@ class ChaosCase(Case, Generic[InputT, OutputT]):
     def expand(
         cls,
         cases: list[Case],
-        effect_maps: dict[str, ChaosEffects],
+        effect_maps: dict[str, ChaosEffectsConfig],
         include_no_effect_baseline: bool = False,
     ) -> list["ChaosCase"]:
         """Generate the Cartesian product of cases × named effect maps.
@@ -146,7 +146,7 @@ class ChaosCase(Case, Generic[InputT, OutputT]):
             Flat list of ChaosCase objects with composite names like
             "flight_search|baseline" or "flight_search|search_timeout".
         """
-        all_entries: list[tuple[str, ChaosEffects]] = []
+        all_entries: list[tuple[str, ChaosEffectsConfig]] = []
 
         if include_no_effect_baseline:
             all_entries.append(("baseline", {}))

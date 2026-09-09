@@ -19,7 +19,6 @@ structured output. after_model_invocation never touches messages carrying toolUs
 
 import json
 import logging
-from typing import Protocol, cast
 
 from strands.hooks import (
     AfterInvocationEvent,
@@ -35,6 +34,7 @@ from .case import ChaosCase
 from .effects import (
     ChaosEffect,
     MalformedJson,
+    ModelEffectUnion,
     SuccessFraming,
     TruncateFields,
 )
@@ -43,12 +43,6 @@ logger = logging.getLogger(__name__)
 
 _CHAOS_STATE_KEY = "strands_evals.chaos"
 _MALFORMED_OUTPUT_APPLIED = "malformed_structured_output_applied"
-
-
-class PreModelEffect(Protocol):
-    """A model effect that cancels the model call with a message."""
-
-    def cancel_message(self) -> str: ...
 
 
 class ChaosPlugin(Plugin):
@@ -200,7 +194,7 @@ class ChaosPlugin(Plugin):
         effect = self._select_pre_model_effect()
         if effect is None:
             return
-        event.cancel = effect.cancel_message()
+        event.cancel = effect.apply()
         logger.info("effect=<%s> | injected model pre-hook cancel", type(effect).__name__)
 
     @hook  # type: ignore[call-overload]
@@ -218,7 +212,7 @@ class ChaosPlugin(Plugin):
             ", ".join(type(e).__name__ for e in effects),
         )
 
-    def _select_pre_model_effect(self) -> PreModelEffect | None:
+    def _select_pre_model_effect(self) -> ModelEffectUnion | None:
         """Return the single configured pre-hook model effect, or None.
 
         ChaosCase validation guarantees at most one pre effect, so no ordering policy is needed.
@@ -228,10 +222,10 @@ class ChaosPlugin(Plugin):
             return None
         for effect in chaos_case.model_effects:
             if effect.hook == "pre":
-                return cast(PreModelEffect, effect)
+                return effect
         return None
 
-    def _get_post_model_effects(self) -> list:
+    def _get_post_model_effects(self) -> list[ModelEffectUnion]:
         """Return the configured post-hook model effects.
 
         Empty when a pre effect is configured: the pre effect already produced the turn,

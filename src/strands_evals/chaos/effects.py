@@ -375,18 +375,13 @@ class EmptyResponse(ModelEffect):
     hook: ClassVar[Literal["pre", "post"]] = "pre"
     effect_type: Literal["empty_response"] = "empty_response"
 
-    def cancel_message(self) -> str:
-        """Pre-cancel with single space (truthy) skips real model call."""
-        return " "
+    def apply(self, content: Any = None) -> str:
+        """Return the cancel text that skips the real model call.
 
-    def apply(self, content: Any = None) -> Any:
-        if content is None:
-            raise ValueError("EmptyResponse.apply() requires content")
-        if isinstance(content, str):
-            return ""
-        elif isinstance(content, list):
-            return []
-        raise ValueError(f"EmptyResponse.apply() received unsupported type {type(content).__name__}")
+        A single space rather than an empty string: the SDK only honours a truthy
+        `event.cancel`, so `""` would let the real call proceed.
+        """
+        return " "
 
 
 class Confabulation(ModelEffect):
@@ -448,19 +443,9 @@ class FullRefusal(ModelEffect):
         "I can't assist with the request as described. Could you provide more context?",
     ]
 
-    def cancel_message(self) -> str:
-        """Return a random refusal template string for use with event.cancel."""
+    def apply(self, content: Any = None) -> str:
+        """Return a random refusal template for use as `event.cancel`."""
         return random.choice(self._REFUSAL_TEMPLATES)
-
-    def apply(self, content: Any = None) -> Any:
-        if content is None:
-            raise ValueError("FullRefusal.apply() requires content")
-        template = random.choice(self._REFUSAL_TEMPLATES)
-        if isinstance(content, str):
-            return template
-        elif isinstance(content, list):
-            return [{"text": template}]
-        raise ValueError(f"FullRefusal.apply() received unsupported type {type(content).__name__}")
 
 
 class SuccessFraming(ModelEffect):

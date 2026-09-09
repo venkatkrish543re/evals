@@ -4,7 +4,7 @@ Provides deterministic fault injection for evaluating agent resilience
 under tool failures and response corruption scenarios.
 """
 
-from .case import ChaosCase, ChaosEffects
+from .case import ChaosCase, ChaosEffectsConfig
 from .effects import (
     ChaosEffect,
     Confabulation,
@@ -13,6 +13,8 @@ from .effects import (
     ExecutionError,
     FullRefusal,
     MalformedJson,
+    ModelEffect,
+    ModelEffectUnion,
     NetworkError,
     RemoveFields,
     SuccessFraming,
@@ -28,13 +30,15 @@ from .plugin import ChaosPlugin
 __all__ = [
     # Core classes
     "ChaosCase",
-    "ChaosEffects",
+    "ChaosEffectsConfig",
     "ChaosExperiment",
     "ChaosPlugin",
     # Effect hierarchy
     "ChaosEffect",
     "ToolEffect",
     "ToolEffectUnion",
+    "ModelEffect",
+    "ModelEffectUnion",
     # Tool effects
     "Timeout",
     "NetworkError",
